@@ -1,0 +1,24 @@
+{
+  "name": "playwright-_webrota",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/josafagonzaga/Playwright-_webrota.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/josafagonzaga/Playwright-_webrota/issues"
+  },
+  "homepage": "https://github.com/josafagonzaga/Playwright-_webrota#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.8.0"
+  }
+}
