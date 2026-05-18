@@ -230,3 +230,146 @@ test('deve validar aba geral de meus dados apos impersonate webrota', async ({ p
   await expect(profileField('Estado')).toHaveValue('Minas Gerais');
   await expect(profileField('Telefone')).toHaveValue('34984237563');
 });
+
+test('deve editar veiculo NLR-2532 apos impersonate webrota e validar tela', async ({ page }) => {
+  const username = process.env.WEBROTA_USERNAME;
+  const password = process.env.WEBROTA_PASSWORD;
+
+  test.skip(!username || !password, 'Informe WEBROTA_USERNAME e WEBROTA_PASSWORD no .env');
+  if (!username || !password) return;
+
+  await page.goto('https://app.webrota.com.br/login');
+  await page.locator('input[name="username"]').fill(username);
+  await page.locator('input[name="password"]').fill(password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await expect(page).toHaveURL(/\/admin\/system/);
+
+  await page.goto('https://app.webrota.com.br/admin/customer');
+  await page.getByRole('textbox').first().fill('webrota');
+  await page.getByRole('button', { name: 'Pesquisar' }).click();
+
+  const webrotaRow = page.locator('tbody tr:visible').filter({
+    has: page.locator('td', { hasText: /^WEBROTA$/ }),
+  });
+
+  await expect(webrotaRow).toHaveCount(1);
+  await webrotaRow.locator('a[title="Autenticar com usuário"]').click();
+
+  await expect(page.getByRole('heading', { name: 'Selecione o usuário' })).toBeVisible();
+  await page.getByRole('button', { name: /^WEBROTA$/ }).click();
+
+  await expect(page).toHaveURL(/\/app\/system/);
+  await expect(page.locator('main').getByText('WEBROTA', { exact: true }).first()).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('impersonate'))).toBe('1');
+
+  await page.goto('https://app.webrota.com.br/app/fleet/vehicle');
+  await expect(page.getByRole('heading', { name: 'Veículo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Pesquisar' }).click();
+
+  await expect(page.getByText('Total de 76 registros.')).toBeVisible();
+
+  const vehicleRow = page.locator('tbody tr:visible').filter({
+    has: page.locator('td', { hasText: /NLR-2532/ }),
+  });
+
+  await expect(vehicleRow).toHaveCount(1);
+  await expect(vehicleRow).toContainText('CARROSUPORTE');
+  await expect(vehicleRow).toContainText('Maycon');
+  await expect(vehicleRow).toContainText('Frota Terceirizada');
+
+  await vehicleRow.locator('a[title="Editar"]').click();
+
+  await expect(page).toHaveURL(/\/app\/fleet\/vehicle\/\d+/);
+  await expect(page.getByRole('heading', { name: 'Veículo' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Geral' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Características' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Análise' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Salvar' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancelar' })).toBeVisible();
+
+  await expect(page.locator('input[name="title"]')).toHaveValue('NLR-2532');
+  await expect(page.locator('input[name="plate"]')).toHaveValue('CARROSUPORTE');
+  await expect(page.locator('input[name="responsible"]')).toHaveValue('Maycon');
+  await expect(page.locator('p-dropdown[name="fleet"]')).toContainText('Frota Terceirizada');
+  await expect(page.locator('p-dropdown[name="status"]')).toContainText('Ativo');
+  await expect(page.locator('p-dropdown[name="situation"]')).toContainText('Normal');
+});
+
+test('@smoke pos deploy - valida fluxo critico WebRota', async ({ page }) => {
+  const username = process.env.WEBROTA_USERNAME;
+  const password = process.env.WEBROTA_PASSWORD;
+
+  test.skip(!username || !password, 'Informe WEBROTA_USERNAME e WEBROTA_PASSWORD no .env');
+  if (!username || !password) return;
+
+  await page.goto('https://app.webrota.com.br/login');
+  await page.locator('input[name="username"]').fill(username);
+  await page.locator('input[name="password"]').fill(password);
+  await page.getByRole('button', { name: 'Entrar' }).click();
+
+  await expect(page).toHaveURL(/\/admin\/system/);
+  await expect(page.locator('main').getByText('JOSAFA GONZAFA', { exact: true }).first()).toBeVisible();
+
+  await page.goto('https://app.webrota.com.br/admin/customer');
+  await page.getByRole('textbox').first().fill('webrota');
+  await page.getByRole('button', { name: 'Pesquisar' }).click();
+
+  await expect(page.getByText('Total de 4 registros.')).toBeVisible();
+
+  const webrotaRow = page.locator('tbody tr:visible').filter({
+    has: page.locator('td', { hasText: /^WEBROTA$/ }),
+  });
+
+  await expect(webrotaRow).toHaveCount(1);
+  await expect(webrotaRow).toContainText('Software');
+  await webrotaRow.locator('a[title="Autenticar com usuário"]').click();
+
+  await expect(page.getByRole('heading', { name: 'Selecione o usuário' })).toBeVisible();
+  await page.getByRole('button', { name: /^WEBROTA$/ }).click();
+
+  await expect(page).toHaveURL(/\/app\/system/);
+  await expect(page.locator('main').getByText('WEBROTA', { exact: true }).first()).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('impersonate'))).toBe('1');
+
+  await page.getByRole('link', { name: /Meus dados/ }).click();
+
+  await expect(page).toHaveURL(/\/app\/misc\/profile/);
+  await expect(page.getByRole('heading', { name: 'Meus dados' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Geral' })).toBeVisible();
+
+  const profileField = (label: string) => page.getByText(label, { exact: true }).locator('xpath=..').locator('input');
+
+  await expect(page.locator('input[name="name"]')).toHaveValue('WEBROTA');
+  await expect(page.locator('input[name="document_number"]')).toHaveValue('16995360000100');
+  await expect(page.locator('input[name="consultant.name"]')).toHaveValue('YAGO SOUZA');
+  await expect(profileField('Email')).toHaveValue('relacionamento@webrotacom.br');
+  await expect(profileField('Cidade')).toHaveValue('Uberlandia');
+  await expect(profileField('Estado')).toHaveValue('Minas Gerais');
+
+  await page.goto('https://app.webrota.com.br/app/fleet/vehicle');
+  await expect(page.getByRole('heading', { name: 'Veículo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Pesquisar' }).click();
+
+  await expect(page.getByText('Total de 76 registros.')).toBeVisible();
+
+  const vehicleRow = page.locator('tbody tr:visible').filter({
+    has: page.locator('td', { hasText: /NLR-2532/ }),
+  });
+
+  await expect(vehicleRow).toHaveCount(1);
+  await expect(vehicleRow).toContainText('CARROSUPORTE');
+  await expect(vehicleRow).toContainText('Frota Terceirizada');
+  await vehicleRow.locator('a[title="Editar"]').click();
+
+  await expect(page).toHaveURL(/\/app\/fleet\/vehicle\/\d+/);
+  await expect(page.getByRole('heading', { name: 'Veículo' })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Geral' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Salvar' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cancelar' })).toBeVisible();
+
+  await expect(page.locator('input[name="title"]')).toHaveValue('NLR-2532');
+  await expect(page.locator('input[name="plate"]')).toHaveValue('CARROSUPORTE');
+  await expect(page.locator('input[name="responsible"]')).toHaveValue('Maycon');
+  await expect(page.locator('p-dropdown[name="fleet"]')).toContainText('Frota Terceirizada');
+  await expect(page.locator('p-dropdown[name="status"]')).toContainText('Ativo');
+});
