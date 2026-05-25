@@ -1,0 +1,97 @@
+{
+  "run": {
+    "date_local": "2026-05-22 10:08 America/Sao_Paulo",
+    "browser": "dev-browser-panel Chromium via CDP",
+    "credential_source": ".env (password not stored in logs)"
+  },
+  "flow": [
+    {
+      "step": "Admin login",
+      "page": "https://app.webrota.com.br/admin/customer",
+      "observed": "Redirected to login, authenticated as admin, landed on /admin/system.",
+      "status": "ok"
+    },
+    {
+      "step": "Customer search and impersonate",
+      "page": "https://app.webrota.com.br/admin/customer",
+      "observed": "Searched customer name \"webrota\"; 4 records returned; selected exact active customer WEBROTA and impersonated user WEBROTA.",
+      "status": "ok",
+      "endpoint_statuses": [
+        "GET /customer/?name=webrota... -> 200",
+        "GET /user/?customer_id=1536 -> 200",
+        "POST /auth/login/impersonate/ -> 200"
+      ]
+    },
+    {
+      "step": "Position history map",
+      "page": "https://app.webrota.com.br/app/position-history -> /app/map/track",
+      "vehicle_selected": "Tarde - RFA-5C24",
+      "period_local": "20/05/2026 10:00 to 22/05/2026 10:00",
+      "result": {
+        "distance_km": 306.34,
+        "max_speed_kmh": 109,
+        "moving_time": "05:35:16",
+        "ignition_off_time": "41:55:44",
+        "idle_time": "00:30:00"
+      },
+      "endpoint_statuses": [
+        "GET /position/geojson?...vehicle=20754&begin_date=2026-05-20T13:00:00.000Z&end_date=2026-05-22T13:00:59.000Z... -> 200"
+      ],
+      "status": "ok"
+    },
+    {
+      "step": "Travel report comparison",
+      "page": "https://app.webrota.com.br/app/report/travel",
+      "vehicle_selected": "Tarde - RFA-5C24 / RFA-5C24",
+      "period_local": "20/05/2026 10:00:00 to 22/05/2026 10:00:00",
+      "result": {
+        "records": 13,
+        "total_distance_km": 301.69,
+        "total_time": "05:34:21"
+      },
+      "endpoint_statuses": [
+        "GET /event/?aggregated_field=vehicle&vehicles_id=[20754]&event_category=1... -> 200",
+        "GET /cust_average/?vehicles_id=20754... -> 200",
+        "GET /cust/?vehicles_id=20754... -> 200"
+      ],
+      "status": "ok"
+    }
+  ],
+  "comparison": {
+    "map_distance_km": 306.34,
+    "travel_report_distance_km": 301.69,
+    "difference_km": 4.65,
+    "difference_percent_vs_report": 1.54,
+    "matches": false,
+    "finding": "The mileage does not match for the same vehicle and local period. Map/Rastro is higher by 4.65 km."
+  },
+  "observations": [
+    {
+      "severity": "medium",
+      "area": "Mileage consistency",
+      "detail": "Rastro map summary shows 306.34 KM while Travel report total shows 301.69 km for the same vehicle and interval.",
+      "evidence": "Position history uses /position/geojson; travel report uses /event with event_category=1. Difference is 4.65 km (1.54%)."
+    },
+    {
+      "severity": "low",
+      "area": "Console warnings",
+      "detail": "Moment locale deprecation warning appears after page loads."
+    },
+    {
+      "severity": "low",
+      "area": "Map technical debt",
+      "detail": "Google Maps warns that the API is loaded without loading=async and that google.maps.Marker is deprecated in favor of AdvancedMarkerElement."
+    },
+    {
+      "severity": "low",
+      "area": "Date/time inputs",
+      "detail": "Minute spinner accepted a transient value of \"000\" during keyboard entry, though the submitted period was interpreted as 00 minutes."
+    }
+  ],
+  "failures": {
+    "http_4xx_5xx_seen": false,
+    "request_failed_seen": false,
+    "console_errors_seen": false
+  },
+  "sanitization": "No passwords, tokens, CPF, e-mail, or raw API payloads are stored in this artifact."
+}
