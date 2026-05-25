@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:login": "playwright test --grep \"@login(\\s|$)\""
   },
   "repository": {
     "type": "git",
