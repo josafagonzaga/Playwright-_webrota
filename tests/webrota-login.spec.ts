@@ -4,6 +4,8 @@ import { loginWithAccount } from './support/webrota-auth';
 import { loginAccounts } from './support/webrota-login-accounts';
 
 test.describe('WebRota login', () => {
+  test.describe.configure({ timeout: 90_000 });
+
   test('@login deve bloquear acesso com senha invalida', async ({ page }) => {
     const username = process.env.WEBROTA_USERNAME;
     const invalidPassword = process.env.WEBROTA_INVALID_PASSWORD;

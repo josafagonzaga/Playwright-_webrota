@@ -4,6 +4,10 @@ export type WebrotaLoginAccount = {
   password?: string;
   usernameEnv: string;
   passwordEnv: string;
+  companyDocument?: string;
+  companyDocumentEnv?: string;
+  expectedLoggedUserName?: string;
+  expectedLoggedUserNameEnv?: string;
   expectedHomeUrl?: RegExp;
 };
 
@@ -22,6 +26,10 @@ export const loginAccounts: WebrotaLoginAccount[] = [
     password: process.env.WEBROTA_CUSTOMER_PASSWORD,
     usernameEnv: 'WEBROTA_CUSTOMER_USERNAME',
     passwordEnv: 'WEBROTA_CUSTOMER_PASSWORD',
+    companyDocument: process.env.WEBROTA_CUSTOMER_DOCUMENT,
+    companyDocumentEnv: 'WEBROTA_CUSTOMER_DOCUMENT',
+    expectedLoggedUserName: process.env.WEBROTA_CUSTOMER_LOGGED_USER_NAME,
+    expectedLoggedUserNameEnv: 'WEBROTA_CUSTOMER_LOGGED_USER_NAME',
     expectedHomeUrl: /\/app\/system/,
   },
   {
